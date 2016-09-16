@@ -236,6 +236,9 @@ void *entryPoint(void *param)
         endRow = numRows * tid + numRows;
     }
     
+    // used for testing
+    // don't like having to also add one to each index here from
+    // startRow to endRow, should add one in above algorithm
     for (i = startRow; i < endRow; i++)
         printf("tid %d does row %d\n", tid, i + 1);
     
