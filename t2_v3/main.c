@@ -75,13 +75,21 @@ int CURRENT_GENERATION = 0;
  * NOTES:
  * -If the new value is going to be negative as a result of
  *  applying the rule, assign 0 instead of new negative value
+ * -The order of precedence of the rules is determined by their
+ *  order of execution. The rule at the top has the highest
+ *  precedence and the rule at the bottom has the lowest.
+ * -Can't go negative, assign 0
  *
- * Conditions    Rules
- * -------------------------------------------
- * % 10 == 0		0
- * Under 50		Add 3
- * Over  50		Subtract 3	Can't go negative, assign 0
- * Over 150		1
+ * Conditions    Rules          Range
+ * -------------------------------------------------------------------
+ * % 10 == 0		0           Sums evenly divisible by 10
+ * Under 50		Add 3           Sums less than or equal to 49 not 
+                                divisible by 10
+ * Over  50		Subtract 3      Sums between 51 and 150 not divisible 
+                                by 10
+ * Over 150		1               Sums 151 and greater not divisible by 10
+ 
+ Can't go negative, assign 0
  ***********************************************************************/
 int newValue(int sum, int cellValue)
 {
