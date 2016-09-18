@@ -78,7 +78,7 @@ int newValue(int sum, int cellValue)
     int value = -9999;
     if (sum % 10 == 0)              value = 0;
     else if (sum < 50)              value = cellValue + 3;
-    else if (sum > 50 && sum =< 150) value = ((cellValue - 3) < 0) ? 0 : (cellValue - 3);
+    else if (sum > 50 && sum <= 150) value = ((cellValue - 3) < 0) ? 0 : (cellValue - 3);
     else                            value = 1;
     
     return value;
