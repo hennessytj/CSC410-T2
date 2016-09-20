@@ -10,17 +10,23 @@
 #define arrays_h
 
 
+#define OFFSET 2
+
 // M = rows, N = columns for 2D arrays
 // The number of columns must be known at compile time
-#define M 8
-#define N 8
+// These refer to the actual number of rows and columns not
+// including boundary
+#define M 3 + OFFSET
+#define N 3 + OFFSET
+
+
 
 // Used with rand() to determine range [0, RANGE)
-#define RANGE 100
+#define RANGE 20
 #define SEED  1
 
 // Number of generations to run
-#define GENERATIONS 1
+#define GENERATIONS 8
 
 // Booleans
 #define true    1

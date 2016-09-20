@@ -188,14 +188,12 @@ int main(int argc, const char * argv[])
     int generation = 0;
     int totalGenerations = GENERATIONS;
     int A[M][N] = {0};
-    //int B[M][N];
+    int B[M][N];
+    
+    
+    fillRandomly(M, N, B);
     
     /*
-    fillRandomly(M, N, B);
-    printf("Gen:  %d ---------------------------  \n", generation);
-    print(M, N, B);
-     */
-    
     int B[][N] = {
         {0,  0,  0,   0,  0,  0,  0, 0},
         {0,  3,  6,  17, 15, 13, 15, 0},
@@ -206,8 +204,34 @@ int main(int argc, const char * argv[])
         {0,  9,  2,   2, 18,  9,  7, 0},
         {0,  0,  0,   0,  0,  0,  0, 0}
     };
+     */
     
-    printf("Gen:  %d ---------------------------  \n", generation);
+    /* Assume this is generation 0
+    int B[][N] = {
+        {0,  0,  0,  0,  0},
+        {0,  3,  6, 17,  0},
+        {0, 15, 13, 15,  0},
+        {0,  6, 12,  9,  0},
+        {0,  0,  0,  0,  0}
+    };
+     */
+    
+    /*
+    int B[][N] = {
+        {0,  0,  0,  0,  0,  0,  0,  0,  0, 0},
+        {0,  3,  6, 17, 15, 13, 15,  6, 12, 0},
+        {0,  9,  1,  2,  7, 10, 19,  3,  6, 0},
+        {0,  0,  6, 12, 16, 11,  8,  7,  9, 0},
+        {0,  2, 10,  2,  3,  7, 15,  9,  2, 0},
+        {0,  2, 18,  9,  7, 13, 16, 11,  2, 0},
+        {0,  9, 13,  1, 19,  4, 17, 18,  4, 0},
+        {0, 15, 10, 13,  6, 11,  0, 16, 13, 0},
+        {0,  2, 10, 16,  1,  5,  5,  4,  7, 0},
+        {0,  0,  0,  0,  0,  0,  0,  0,  0, 0}
+    };
+     */
+    
+    printf("Initial Values ---------------------------  \n");
     print(M, N, B);
     
     // Will loop for the value of totalGenerations
@@ -219,7 +243,7 @@ int main(int argc, const char * argv[])
         {
             // transfer new values based on rules into array A
             updateCells(M, N, B, A);
-            printf("Gen:  %d ---------------------------  \n", generation + 1);
+            printf("Gen:  %d ---------------------------  \n", generation);
             print(M, N, A);
             //printf("Sum is %d\n", computeSum(n, 2, 1, B));
         }
@@ -227,7 +251,7 @@ int main(int argc, const char * argv[])
         {
             // transfer new values based on rules into array B
             updateCells(M, N, A, B);
-            printf("Gen:  %d ---------------------------  \n", generation + 1);
+            printf("Gen:  %d ---------------------------  \n", generation);
             print(M, N, B);
         }
         generation++;
