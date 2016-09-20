@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "define.h"
 
-/*****************************  fillRandomly  *****************************
+/*****************************  copyArray ******************************
  * void copyArray(int rows, int cols, int arr1[][cols], int arr2[][cols])
  *
  * Description: Copies 2D array arr1 into arr2.
