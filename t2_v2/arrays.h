@@ -26,7 +26,7 @@
 #define SEED  1
 
 // Number of generations to run
-#define GENERATIONS 8
+#define GENERATIONS 4
 
 // Booleans
 #define true    1
