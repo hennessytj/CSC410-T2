@@ -1,18 +1,22 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include "define.h"
 /***********************************************************************
  * t2_v3.c written by DSU_410 team ...
  *
  * What's new:
- * -Added parallel implementation using static scheduling
- * -If a value is negative, it is replaced by zero before
- *  being transfered into new array cell.
- * -Fixed contants, variables, and various terminology
+ * -Uses two globally defined arrays A and B to compute values across
+ *  generations.
+ * -Array A is always printed out and contains the values of the most
+ *  recent generation.  The array B is always used to compute the values.
  *
  * Description: Given an MxN matrix compute the
  * sums of each cell and its neighbors.  Use the sum
  * and the set of rules to derive the each cell's
  * new value.
  *
- * compile: %gcc -o t2_v3 t2_v3.c
+ * compile: %gcc main.c arrays.c -o t2_v3
  * execute: ./t2_v3
  *
  * Process:
@@ -36,24 +40,13 @@
  * Under 50		Add 3
  * Over  50		Subtract 3	Can't go negative
  * Over 150		1
- *
  ************************************************************************/
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include "arrays.h"
 
 // Global extern basis variables
 // Used to make working with threads easier since each thread shares
 // data which includes global variables
 int A[M][N] = {0};
 int B[M][N];
-
-// Threads
-#define NUM_THREADS 5
-
-// Important generation data
-#define TOTAL_GENERATIONS 1
 int CURRENT_GENERATION = 0;
 
 /*****************************  newValue  *****************************
@@ -63,8 +56,8 @@ int CURRENT_GENERATION = 0;
  * new value.
  *
  * Process:
- * 1.) Assign to value appropriate new value based on rules.
- * 3.) Value is returned.
+ * 1.) Assign to local variable value new value based on rules.
+ * 3.) Return value
  *
  * Parameter    Direction   Description
  * --------------------------------------------------------------------
@@ -82,53 +75,47 @@ int CURRENT_GENERATION = 0;
  *
  * Conditions    Rules          Range
  * -------------------------------------------------------------------
- * % 10 == 0		0           Sums evenly divisible by 10
+ * % 10 == 0    Assign 0        Sums evenly divisible by 10
  * Under 50		Add 3           Sums less than or equal to 49 not 
-                                divisible by 10
+ *                              divisible by 10
  * Over  50		Subtract 3      Sums between 51 and 150 not divisible 
-                                by 10
+ *                              by 10
  * Over 150		1               Sums 151 and greater not divisible by 10
- 
- Can't go negative, assign 0
  ***********************************************************************/
 int newValue(int sum, int cellValue)
 {
     int value = -9999;
-    if (sum % 10 == 0)              value = 0;
-    else if (sum < 50)              value = cellValue + 3;
-    else if (sum > 50 && sum <= 150) value = ((cellValue - 3) < 0) ? 0 : (cellValue - 3);
-    else                            value = 1;
+    if (sum % 10 == 0)               value = 0;
+    else if (sum < 50)               value = cellValue + 3;
+    else if (sum > 50 && sum < 150)  value = ((cellValue - 3) < 0) ? 0 : (cellValue - 3);
+    else                             value = 1;
     
     return value;
 }
 
 /*****************************  computeSum  *****************************
- * int computeSum(int cols, int i, int j, int arr[][cols])
+ * int computeSum(int i, int j)
  *
- * Description: Takes a 2D array and computes sum of arr[i][j] and
+ * Description: Takes a 2D array and computes sum of B[i][j] and
  * its neighbors.  Returns this value to the calling environment.
  *
  * Process:
- *     Assumption: no element arr[i][j] is passed to this function
+ *     Assumption: no indices i or j are passed to this function
  *     that will be out of bounds or not capable of being computed.
  * 1.) The values of neighbor cells are hardcoded and added together
- *     with arr[i][j].
+ *     with B[i][j].
  * 2.) Sum is returned.
  *
  * Parameter    Direction   Description
  * --------------------------------------------------------------------
- * cols         in          total number of columns in array, used for
- *                          function declaration
  * i            in          row of computed element
  * j            in          column of computed element
- * arr          in          used to compute sum
  *
  * NOTES:
- * - C99 and later accept function declaration as long as column values
- *   for 2D array appear in parameter list before arrays.
  * - Please see assumption under Process above.
+ * - Uses globally defined array B.
  *
- * Neighbor diagram (assume X is arr[i][j]):
+ * Neighbor diagram (assume X is B[i][j]):
  *    Start here:  1 ->  2  -> 3
  *                             |
  *                             V
@@ -138,34 +125,35 @@ int newValue(int sum, int cellValue)
  *                 7 <-  6  <- 5
  * Neighbor order goes 1, 2, 3, 4, 5, 6, 7, 8, X
  ***********************************************************************/
-int computeSum(int cols, int i, int j, int arr[][cols])
+int computeSum(int i, int j)
 {
     int sum = 0;
-    sum = arr[i - 1][j - 1] +   // 1
-    arr[i - 1][  j  ] +         // 2
-    arr[i - 1][j + 1] +         // 3
-    arr[  i  ][j + 1] +         // 4
-    arr[i + 1][j + 1] +         // 5
-    arr[i + 1][  j  ] +         // 6
-    arr[i + 1][j - 1] +         // 7
-    arr[  i  ][j - 1] +         // 8
-    arr[  i  ][  j  ];          // X
+    sum = B[i - 1][j - 1] +   // 1
+    B[i - 1][  j  ] +         // 2
+    B[i - 1][j + 1] +         // 3
+    B[  i  ][j + 1] +         // 4
+    B[i + 1][j + 1] +         // 5
+    B[i + 1][  j  ] +         // 6
+    B[i + 1][j - 1] +         // 7
+    B[  i  ][j - 1] +         // 8
+    B[  i  ][  j  ];          // X
     return sum;
 }
 
 /*****************************  updateCells  *****************************
- * void updateCells(int rows, int cols, int arr1[][cols], int arr2[][cols])
+ * void updateCells(int start, int end)
  *
  * Description: Takes a 2D array and computes a new positive integer
  * value for each applicable cell based on a set of rules.  The new
  * value is stored in another array.
  *
  * Process:
- * 1.) For each cell in arr1, call computeSum.
+ * 1.) For each cell in gloabl array B, call computeSum for indices
+ *     i and j.
  * 2.) Sum is used with a set of conditions and rules to determine
- *     the new value of the cell in arr2.  A separate function is called
- *     for this part, newValue(sum).
- * 3.) The new value is stored into arr2.
+ *     the new value of the cell in global array A.  A separate function 
+ *     is called for this part, newValue(sum).
+ * 3.) The new value is stored into global array A.
  *
  * Parameter    Direction   Description
  * --------------------------------------------------------------------
@@ -173,8 +161,6 @@ int computeSum(int cols, int i, int j, int arr[][cols])
  * end          in          last row worked on
  *
  * NOTES:
- * - C99 and later accept function declaration as long as column values
- *   for 2D array appear in parameter list before arrays.
  * - The outer perimeter is not in play.  The outer perimeter of both
  *   arrays are 0's used to help programmer.
  ***********************************************************************/
@@ -183,22 +169,14 @@ void updateCells(int start, int end)
     int i;
     int j;
     int sum = 0;
-    int arr1[M][N];
-    int arr2[M][N];
-    
-    /* Figure out how to assign B's pointer to arr1 and so on...
-    if (CURRENT_GENERATION % 2 == 0) // B is arr1, A is arr2
-    else // A is arr1, B is arr2
-     */
-    
-    for (i = start; i <= end; i++)
+    for (i = start; i < end; i++)
     {
         for (j = 1; j < N - 1; j++)
         {
             // get sum of neighbors and current cell
-            sum = computeSum(M, i, j, arr1);
+            sum = computeSum(i, j);
             // store newValue based on rules into arr2
-            arr2[i][j] = newValue(sum, arr1[i][j]);
+            A[i][j] = newValue(sum, B[i][j]);
         }
     }
 }
@@ -244,13 +222,8 @@ void *entryPoint(void *param)
         endRow = numRows * tid + numRows;
     }
     
-    // used for testing
-    // don't like having to also add one to each index here from
-    // startRow to endRow, should add one in above algorithm
     for (i = startRow; i < endRow; i++)
-        printf("tid %d does row %d\n", tid, i + 1);
-    
-    // updateCells(startRow + 1, endRow + 1);
+        updateCells(startRow + 1, endRow + 1);
     
     pthread_exit(NULL);
 }
@@ -288,49 +261,18 @@ void spinUpThreads()
 
 int main(int argc, const char * argv[])
 {
-    // Will be generation 0, generation 0 does not count towards total generations
-    // computed by this program
-     fillRandomly(M, N, B);
-     printf("Gen:  %d ---------------------------  \n", CURRENT_GENERATION);
-     print(M, N, B);
-    
-    /* Tom's array, used for comparison test
-    int B[][N] = {
-        {0,  0,  0,   0,  0,  0,  0, 0},
-        {0,  3,  6,  17, 15, 13, 15, 0},
-        {0,  6, 12,   9,  1,  2,  7, 0},
-        {0, 10, 19,   3,  6,  0,  6, 0},
-        {0, 12, 16,  11,  8,  7,  9, 0},
-        {0,  2, 10,   2,  3,  7, 15, 0},
-        {0,  9,  2,   2, 18,  9,  7, 0},
-        {0,  0,  0,   0,  0,  0,  0, 0}
-    };
-    printf("Gen:  %d ---------------------------  \n", CURRENT_GENERATION);
+    fillRandomly(M, N, B);
+    // Print out values returned by random filling function
+    printf("Initial Values ---------------------------  \n");
     print(M, N, B);
-     */
     
-    // Will loop for the value of totalGenerations
-    // generation is used to determine the order of
-    // switching arrays used in intermediate calculations
+    // Array A always contains current values, array B is used for intermediate results
     while (CURRENT_GENERATION < TOTAL_GENERATIONS)
     {
-        if (CURRENT_GENERATION % 2 == 0)
-        {
-            // transfer new values based on rules into array A
-            // array B is used for initial values, array A gets new rule based values
-            spinUpThreads();
-            printf("Gen:  %d ---------------------------  \n", CURRENT_GENERATION + 1);
-            print(M, N, A);
-            //printf("Sum is %d\n", computeSum(n, 2, 1, B));
-        }
-        else
-        {
-            // transfer new values based on rules into array B
-            // array A is used for prev values, array B gets new rule based values
-            spinUpThreads();
-            printf("Gen:  %d ---------------------------  \n", CURRENT_GENERATION + 1);
-            print(M, N, B);
-        }
+        spinUpThreads();
+        printf("Gen:  %d ---------------------------  \n", CURRENT_GENERATION);
+        print(M, N, A);
+        copyArray(M, N, A, B);  // copy values from A into B
         CURRENT_GENERATION++;
     }
     

@@ -1,6 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "arrays.h"
+#include "define.h"
+
+/*****************************  fillRandomly  *****************************
+ * void copyArray(int rows, int cols, int arr1[][cols], int arr2[][cols])
+ *
+ * Description: Copies 2D array arr1 into arr2.
+ *
+ * Process:
+ * 1.) Uses a double for loop to go cell-by-cell copying values over.
+ *
+ * Parameter    Direction   Description
+ * --------------------------------------------------------------------
+ * rows         in          total number of rows in array
+ * cols         in          total number of columns in array
+ * arr1         in          values are copied into arr2
+ * arr2         out         receives values from arr1
+ *
+ * NOTES:
+ * - C99 and later accept function declaration as long as column values
+ *   for 2D array appear in parameter list before arrays.
+ ***********************************************************************/
+void copyArray(int rows, int cols, int arr1[][cols], int arr2[][cols])
+{
+    int i, j;
+    for (i = 0; i < rows; i++)
+        for (j = 0; j < cols; j++)
+            arr2[i][j] = arr1[i][j];
+}
 
 /*****************************  fillRandomly  *****************************
  * void fillRandomly(int rows, int cols, int arr[][cols])
